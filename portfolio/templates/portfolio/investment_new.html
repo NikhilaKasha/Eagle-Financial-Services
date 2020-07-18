@@ -1,0 +1,15 @@
+{% extends 'portfolio/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<body>
+
+    <h1>Add a New Investment</h1>
+
+     <form method="POST" class="investment-form col-lg-5">{% csrf_token %}
+<!--        {{ form|crispy }}-->
+        {{ form.as_p }}
+<!--    <form method="POST" class="investment-form">{% csrf_token %}-->
+<!--            {{ form.as_p }}-->
+        <button type="submit" class="save btn btn-primary">Save</button>
+    </form>
+{% endblock %}

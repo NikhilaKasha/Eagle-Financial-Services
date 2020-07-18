@@ -1,0 +1,71 @@
+{% extends 'portfolio/base.html' %}
+{% load static %}
+{% block title %}Home{% endblock title %}
+{% block content %}
+
+<body>
+{% if user.is_authenticated %}
+<header class="jumbotron my-2" style="background: white">
+    <p class="lead"><b>Hello {{ user.username }}, Kindly choose the below options</b></p>
+</header>
+
+{% endif %}
+ {% if user.is_authenticated %}
+<div class="container">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="fa-credit-card text-center" >
+          <img class="card-img-top" src="{% static "images/customers.jpg" %}" alt="" style="height: 250px">
+          <div class="card-body">
+            <h4 class="card-title">Customer</h4>
+
+          </div>
+          <div class="card-footer">
+            {% if user.is_authenticated %}
+            <a href="{% url 'portfolio:customer_list' %}" class="btn btn-primary">View Details!</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">View Details!</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="fa-credit-card text-center text-nowrap">
+          <img class="card-img-top" src="{% static "images/nonstock.jpg" %}" alt="" style="height: 250px">
+          <div class="card-body">
+            <h4 class="card-title">Investments</h4>
+          </div>
+          <div class="card-footer">
+            {% if user.is_authenticated %}
+            <a href="{% url 'portfolio:investment_list' %}" class="btn btn-primary">View Details!</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">View Details!</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="fa-credit-card text-center">
+          <img class="card-img-top" src="{% static "images/stocks.jpg" %}" alt="" style="height: 250px">
+          <div class="card-body">
+            <h4 class="card-title">Stocks</h4>
+          </div>
+          <div class="card-footer">
+            {% if user.is_authenticated %}
+            <a href="{% url 'portfolio:stock_list' %}" class="btn btn-primary">View Details!</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary">View Details!</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+</div>
+{% endif %}
+</body>
+</html>
+{% endblock %}
