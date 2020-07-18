@@ -1,4 +1,3 @@
-venv
 *.pyc
 __pycache__
 db.sqlite3
@@ -8,3 +7,4 @@ sent_emails/
 .idea
 local_settings.py
 myvenv
+venv
