@@ -13,7 +13,7 @@ SECRET_KEY = 'v1enwy$bf6f^vd%by989d&za+a@l9(oktvant(q%qql6ft7hdx'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -73,8 +73,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'Eagle Financial',
-        'USER': 'Nikhila',
-        'PASSWORD': 'Zxcvbnm@1234'
+        'USER': 'instructor',
+        'PASSWORD': 'maverick1a'
     }
 }
 
