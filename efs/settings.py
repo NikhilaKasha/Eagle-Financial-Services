@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'crispy_forms',
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -134,15 +136,10 @@ MEDIA_URL ='/media/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-LOGIN_REDIRECT_URL = '/home'
+LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = '/home'
 
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '1030515953718-ej7d0b7vmr0cq04u5ceu77pbgcnhg97u.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'ZoaBK3u67L0nBuexG_Zgbeig'
-
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = '/home'
-
-SITE_ID = 1
 
 django_heroku.settings(locals())
