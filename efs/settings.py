@@ -34,6 +34,9 @@ INSTALLED_APPS = [
 
     'portfolio',
     'crispy_forms',
+    'rest_framework',
+    'mathfilters',
+    'django.contrib.humanize'
 ]
 
 SITE_ID = 1

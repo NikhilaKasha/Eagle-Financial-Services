@@ -1,4 +1,6 @@
 from django.conf.urls import url
+from rest_framework.urlpatterns import format_suffix_patterns
+
 from . import views
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -20,6 +22,9 @@ urlpatterns = [
     path('investment/create/', views.investment_new, name='investment_new'),
     path('investment/<int:pk>/edit/', views.investment_edit, name='investment_edit'),
     path('investment/<int:pk>/delete/', views.investment_delete, name='investment_delete'),
+    path('customer/<int:pk>/portfolio/', views.portfolio, name='portfolio'),
+    path('customer/<int:pk>/portfolio/', views.portfolio_summary_pdf, name='portfolio_summary_pdf'),
+    url(r'^customers_json/', views.CustomerList.as_view()),
 
     path('password_change/', auth_views.PasswordChangeView.as_view(template_name='registration/password_change.html')),
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='registration/password_reset.html')),
@@ -28,3 +33,5 @@ urlpatterns = [
     path('reset/<uidb64>/<token>', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 ]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
