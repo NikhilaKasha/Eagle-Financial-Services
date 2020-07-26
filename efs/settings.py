@@ -145,4 +145,11 @@ LOGOUT_REDIRECT_URL = '/home'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '1030515953718-ej7d0b7vmr0cq04u5ceu77pbgcnhg97u.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'ZoaBK3u67L0nBuexG_Zgbeig'
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'eaglefinancialservice09@gmail.com'
+EMAIL_HOST_PASSWORD = 'Zxcvbnm@1234'
+
 django_heroku.settings(locals())

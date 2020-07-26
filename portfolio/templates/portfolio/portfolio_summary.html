@@ -1,23 +1,103 @@
-{% extends 'portfolio/base.html' %}
+{% load static %}
 {% load humanize %}
 {% load mathfilters %}
 
-<html>
-   <head>
-      <meta charset="UTF-8">
-      <title>Eagle Financial</title>
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-   </head>
-   {% block content %}
+<html lang="en">
+<style>
+
+a {
+  color: #5D6975;
+  text-decoration: underline;
+}
+header {
+  padding: 10px 0;
+  margin-bottom: 30px;
+}
+
+#logo {
+  text-align: center;
+  margin-bottom: 10px;
+  background-color: #29293d;
+}
+
+#logo img {
+  width: 90px;
+}
+
+h1 {
+  border-top: 1px solid  #5D6975;
+  border-bottom: 1px solid  #5D6975;
+  color: #5D6975;
+  font-size: 2.4em;
+  line-height: 1.4em;
+  font-weight: normal;
+  text-align: center;
+  margin: 0 0 20px 0;
+  background-image: url("../../static/css/dimension.png");
+}
+
+#project {
+  float: left;
+}
+
+#project span {
+  color: #5D6975;
+  text-align: left;
+  width: 100px;
+  margin-right: 10px;
+  display: inline-block;
+  font-size: 1em;
+}
+
+#company {
+  float: right;
+  text-align: right;
+}
+
+#notices .notice {
+  color: #5D6975;
+  font-size: 1.2em;
+}
+
+footer {
+  color: #5D6975;
+  width: 100%;
+  height: 30px;
+  position: absolute;
+  bottom: 0;
+  border-top: 1px solid #C1CED9;
+  padding: 8px 0;
+  text-align: center;
+}
+</style>
+  <head>
+    <meta charset="utf-8">
+    <title>Portfolio Summary</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  </head>
   <body>
-   <div class="row">
-         <h1 style="padding-left: 15Px">Customer Portfolio</h1>
+    <header class="row">
+      <div id="logo">
+        <img src="{% static 'images/Logo.png' %}">
       </div>
+      <h1>Portfolio Summary</h1>
+      <div id="company" class="clearfix">
+        <div>Eagle Financial Services</div>
+        <div>455 Foggy Heights,<br /> AZ 85004, US</div>
+        <div>(602) 519-0450</div>
+      </div>
+      <div id="project">
+        <div><span>CLIENT</span>{{ customer.name }}</div>
+        <div><span>CLIENT ID</span>{{ customer.cust_number }}</div>
+      </div>
+    </header>
+    <main>
       <div class="row">
          <h2 style="padding-left: 15Px">Overall Portfolio Performance</h2>
       </div>
       <div class="row">
-         <table class="table table-striped table-bordered table-hover">
+         <table class="table table-striped table-bordered">
             <thead>
                <tr bgcolor="#a9a9a9">
                   <th>Portfolio Initial Investments</th>
@@ -39,7 +119,7 @@
          <h2 style="padding-left: 15Px">Stocks Information</h2>
       </div>
       <div class="row">
-         <table class="table table-striped table-bordered table-hover">
+         <table class="table table-striped table-bordered">
             <thead>
                <tr bgcolor="#a9a9a9">
                   <th>Customer</th>
@@ -71,7 +151,7 @@
          </table>
       </div>
       <div class="row">
-         <table class="table table-striped table-bordered table-hover">
+         <table class="table table-striped table-bordered">
             <thead>
                <tr bgcolor="#a9a9a9">
                   <th>Total of Initial Stocks</th>
@@ -92,10 +172,9 @@
          <h2 style="padding-left: 15Px">Investment Information</h2>
       </div>
       <div class="row">
-         <table class="table table-striped table-bordered table-hover">
+         <table class="table table-striped table-bordered">
             <thead>
                <tr bgcolor="#a9a9a9">
-                  <th>Customer</th>
                   <th>Category</th>
                   <th>Description</th>
                   <th>Acquired Value</th>
@@ -108,7 +187,6 @@
             <tbody>
                {% for investment in investments %}
                <tr>
-                  <td>{{ investment.customer }}</td>
                   <td>{{ investment.category }}</td>
                   <td>{{ investment.description }}</td>
                   <td>{{ investment.acquired_value|intcomma }}</td>
@@ -122,7 +200,7 @@
          </table>
       </div>
       <div class="row">
-         <table class="table table-striped table-bordered table-hover">
+         <table class="table table-striped table-bordered">
             <thead>
                <tr bgcolor="#a9a9a9">
                   <th>Total of Initial Investments</th>
@@ -139,19 +217,12 @@
             </tbody>
          </table>
       </div>
-    <div class="row">
-       <table class="table">
-          <tbody>
-          <tr>
-             <td><a href="{% url 'portfolio:pdf_view' pk=customer.pk %}"  class="row"><span class="btn btn-primary">View Report (PDF)</span></a></td>
-             <td><a href="{% url 'portfolio:pdf_download' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Download Report</span></a></td>
-             <td><a href="{% url 'portfolio:pdf_email' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Send Report via e-mail</span></a></td>
-             <td><a href="{% url 'portfolio:portfolioINR' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Convert to INR</span></a></td>
-          </tr>
-          </tbody>
-       </table>
-    </div>
-
+    </main>
+    <footer>
+      This portfolio summary was created on a computer and is valid without the signature and seal.
+    </footer>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
   </body>
 </html>
-{% endblock %}

@@ -4,6 +4,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import views
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from .views import DownloadPDF
 from django.views.generic import TemplateView
 from django.urls import reverse
 
@@ -23,8 +24,13 @@ urlpatterns = [
     path('investment/<int:pk>/edit/', views.investment_edit, name='investment_edit'),
     path('investment/<int:pk>/delete/', views.investment_delete, name='investment_delete'),
     path('customer/<int:pk>/portfolio/', views.portfolio, name='portfolio'),
-    path('customer/<int:pk>/portfolio/', views.portfolio_summary_pdf, name='portfolio_summary_pdf'),
+    path('customer/<int:pk>/portfolio/portfolioINR/', views.portfolioINR, name='portfolioINR'),
+    path('customer/<int:pk>/portfolio/pdf_download/', views.DownloadPDF.as_view(), name='pdf_download'),
+    path('customer/<int:pk>/portfolio/pdf_view/', views.ViewPDF.as_view(), name='pdf_view'),
+    path('customer/<int:pk>/portfolio/pdf_email/', views.EmailPDF.as_view(), name='pdf_email'),
     url(r'^customers_json/', views.CustomerList.as_view()),
+    url(r'^investments_json/', views.InvestmentList.as_view()),
+    url(r'^stocks_json/', views.StockList.as_view()),
 
     path('password_change/', auth_views.PasswordChangeView.as_view(template_name='registration/password_change.html')),
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='registration/password_reset.html')),

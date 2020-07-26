@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
-import requests
+import urllib, json
 
 # Create your models here.
 class Customer(models.Model):
@@ -27,6 +27,7 @@ class Customer(models.Model):
     def __str__(self):
         return str(self.cust_number)
 
+
 class Stock(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='stocks')
     symbol = models.CharField(max_length=10)
@@ -42,22 +43,49 @@ class Stock(models.Model):
     def __str__(self):
         return str(self.customer)
 
+    def USD_INR(self): #current stock price in INR
+        url = 'http://data.fixer.io/api/latest?access_key=799b768b1f610aab56d40eee732733a5&format=1'
+        response = urllib.request.urlopen(url)
+        json_data = json.loads(response.read())
+        EUR_INR = json_data.get('rates', {}).get('INR',0)
+        EUR_USD = json_data.get('rates', {}).get('USD',0)
+        if EUR_INR==0 or EUR_INR=={} or EUR_USD==0 or EUR_USD=={}:
+            return 0
+        else:
+            USD_INR = float(EUR_INR)/float(EUR_USD)
+            return USD_INR
+
+    def purchase_priceINR(self):
+        return round(float(self.purchase_price) * self.USD_INR(), 2)
+
     def initial_stock_value(self):
         return self.shares * self.purchase_price
 
+    def initial_stock_valueINR(self):
+        return round(float(self.shares) * float(self.purchase_price) * self.USD_INR(), 2)
 
-    def current_stock_price(self):
+    def current_stock_price(self): #current stock price in USD
         symbol_f = str(self.symbol)
         main_api = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&amp;symbol='
         api_key = '&interval=1min&apikey=08IT8XH58DEISDPP'
         url = main_api + symbol_f + api_key
-        json_data = requests.get(url).json()
-        open_price = float(json_data["Global Quote"]["02. open"])
-        share_value = open_price
-        return share_value
+        response = urllib.request.urlopen(url)
+        json_data = json.loads(response.read())
+        open_price = json_data.get('Global Quote', {}).get('02. open',0)
+        if open_price==0 or open_price=={}:
+            return 0
+        else:
+            share_value = float(open_price)
+            return share_value
+
+    def current_stock_priceINR(self):
+        return round(self.current_stock_price() * self.USD_INR(), 2)
 
     def current_stock_value(self):
-        return float(self.current_stock_price()) * float(self.shares)
+            return self.current_stock_price() * float(self.shares)
+
+    def current_stock_valueINR(self):
+            return round(self.current_stock_price() * float(self.shares) * self.USD_INR(), 2)
 
 
 class Investment(models.Model):
@@ -65,7 +93,7 @@ class Investment(models.Model):
     category = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
     acquired_value = models.DecimalField(max_digits=10, decimal_places=2)
-    acquired_date = models.DateField(default=timezone.now)
+    acquired_date = models.DateField(default=timezone.now, blank=True, null=True)
     recent_value = models.DecimalField(max_digits=10, decimal_places=2)
     recent_date = models.DateField(default=timezone.now, blank=True, null=True)
 
@@ -80,6 +108,20 @@ class Investment(models.Model):
     def __str__(self):
         return str(self.customer)
 
-    def results_by_investment(self):
-        return self.recent_value - self.acquired_value
+    def USD_INR(self): #current stock price in INR
+        url = 'http://data.fixer.io/api/latest?access_key=799b768b1f610aab56d40eee732733a5&format=1'
+        response = urllib.request.urlopen(url)
+        json_data = json.loads(response.read())
+        EUR_INR = json_data.get('rates', {}).get('INR',0)
+        EUR_USD = json_data.get('rates', {}).get('USD',0)
+        if EUR_INR==0 or EUR_INR=={} or EUR_USD==0 or EUR_USD=={}:
+            return 0
+        else:
+            USD_INR = float(EUR_INR)/float(EUR_USD)
+            return USD_INR
 
+    def acquired_valueINR(self):
+        return round(float(self.acquired_value) * self.USD_INR(), 2)
+
+    def recent_valueINR(self):
+        return round(float(self.recent_value) * self.USD_INR(), 2)

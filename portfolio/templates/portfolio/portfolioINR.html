@@ -20,15 +20,15 @@
          <table class="table table-striped table-bordered table-hover">
             <thead>
                <tr bgcolor="#a9a9a9">
-                  <th>Portfolio Initial Investments</th>
-                  <th>Portfolio Current Investments</th>
-                  <th>Grand Total Results</th>
+                  <th>Portfolio Initial Investments <br>(INR)</th>
+                  <th>Portfolio Current Investments <br>(INR)</th>
+                  <th>Grand Total Results <br>(INR)</th>
                </tr>
             </thead>
             <tbody>
                <tr>
-                  <td>{{ sum_of_initial_stock_value|add:acquired_total|intcomma }}</td>
-                  <td>{{ sum_current_stocks_value|add:recent_total|intcomma }}</td>
+                  <td>{{ sum_of_initial_stock_value|add:sum_acquired_value|intcomma }}</td>
+                  <td>{{ sum_current_stocks_value|add:sum_recent_value|intcomma }}</td>
                   <td>{{ overall_investment_results|add:results |intcomma }}
                </tr>
             </tbody>
@@ -46,11 +46,11 @@
                   <th>Symbol</th>
                   <th>Name</th>
                   <th>Shares</th>
-                  <th>Initial Stock Price</th>
-                  <th>Initial Stock Value</th>
-                  <th>Current Stock Price</th>
-                  <th>Current Stock Value</th>
-                  <th>Results</th>
+                  <th>Initial Stock Price <br>(INR)</th>
+                  <th>Initial Stock Value <br>(INR)</th>
+                  <th>Current Stock Price <br>(INR)</th>
+                  <th>Current Stock Value <br>(INR)</th>
+                  <th>Results<br>(INR)</th>
                </tr>
             </thead>
             <tbody>
@@ -60,11 +60,11 @@
                   <td>{{ stock.symbol }}</td>
                   <td>{{ stock.name }}</td>
                   <td>{{ stock.shares|intcomma }}</td>
-                  <td>{{ stock.purchase_price|intcomma }}</td>
-                  <td>{{ stock.initial_stock_value|intcomma}}</td>
-                  <td>{{ stock.current_stock_price|intcomma}}</td>
-                  <td>{{ stock.current_stock_value|intcomma}}</td>
-                  <td>{{ stock.current_stock_value|sub:stock.initial_stock_value |intcomma}}
+                  <td>{{ stock.purchase_priceINR|intcomma }}</td>
+                  <td>{{ stock.initial_stock_valueINR|intcomma}}</td>
+                  <td>{{ stock.current_stock_priceINR|intcomma}}</td>
+                  <td>{{ stock.current_stock_valueINR|intcomma}}</td>
+                  <td>{{ stock.current_stock_valueINR|sub:stock.initial_stock_valueINR |intcomma}}
                </tr>
                {% endfor %}
             </tbody>
@@ -74,15 +74,15 @@
          <table class="table table-striped table-bordered table-hover">
             <thead>
                <tr bgcolor="#a9a9a9">
-                  <th>Total of Initial Stocks</th>
-                  <th>Total of Current Stocks</th>
-                  <th>Results</th>
+                  <th>Total of Initial Stocks <br>(INR)</th>
+                  <th>Total of Current Stocks <br>(INR)</th>
+                  <th>Results <br>(INR)</th>
                </tr>
             </thead>
             <tbody>
                <tr>
                   <td>{{ sum_of_initial_stock_value|intcomma }}</td>
-                  <td>{{ sum_current_stocks_value }}</td>
+                  <td>{{ sum_current_stocks_value|intcomma }}</td>
                   <td>{{ sum_current_stocks_value|sub:sum_of_initial_stock_value |intcomma }}
                </tr>
             </tbody>
@@ -98,11 +98,11 @@
                   <th>Customer</th>
                   <th>Category</th>
                   <th>Description</th>
-                  <th>Acquired Value</th>
+                  <th>Acquired Value <br>(INR)</th>
                   <th>Acquired Date</th>
-                  <th>Recent Value</th>
+                  <th>Recent Value <br>(INR)</th>
                   <th>Recent Date</th>
-                  <th>Results</th>
+                  <th>Results <br>(INR)</th>
                </tr>
             </thead>
             <tbody>
@@ -111,11 +111,11 @@
                   <td>{{ investment.customer }}</td>
                   <td>{{ investment.category }}</td>
                   <td>{{ investment.description }}</td>
-                  <td>{{ investment.acquired_value|intcomma }}</td>
+                  <td>{{ investment.acquired_valueINR|intcomma }}</td>
                   <td>{{ investment.acquired_date}}</td>
-                  <td>{{ investment.recent_value|intcomma}}</td>
+                  <td>{{ investment.recent_valueINR|intcomma}}</td>
                   <td>{{ investment.recent_date}}</td>
-                  <td>{{ investment.recent_value|sub:investment.acquired_value |intcomma}}
+                  <td>{{ investment.recent_valueINR|sub:investment.acquired_valueINR |intcomma}}
                </tr>
                {% endfor %}
             </tbody>
@@ -125,33 +125,20 @@
          <table class="table table-striped table-bordered table-hover">
             <thead>
                <tr bgcolor="#a9a9a9">
-                  <th>Total of Initial Investments</th>
-                  <th>Total of Current Investments</th>
-                  <th>Results</th>
+                  <th>Total of Initial Investments <br>(INR)</th>
+                  <th>Total of Current Investments <br>(INR)</th>
+                  <th>Results <br>(INR)</th>
                </tr>
             </thead>
             <tbody>
                <tr>
-                  <td>{{ acquired_total|intcomma}}</td>
-                  <td>{{ recent_total|intcomma }}</td>
+                  <td>{{ sum_acquired_value|intcomma}}</td>
+                  <td>{{ sum_recent_value|intcomma }}</td>
                   <td>{{ overall_investment_results|intcomma }}
                </tr>
             </tbody>
          </table>
       </div>
-    <div class="row">
-       <table class="table">
-          <tbody>
-          <tr>
-             <td><a href="{% url 'portfolio:pdf_view' pk=customer.pk %}"  class="row"><span class="btn btn-primary">View Report (PDF)</span></a></td>
-             <td><a href="{% url 'portfolio:pdf_download' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Download Report</span></a></td>
-             <td><a href="{% url 'portfolio:pdf_email' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Send Report via e-mail</span></a></td>
-             <td><a href="{% url 'portfolio:portfolioINR' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Convert to INR</span></a></td>
-          </tr>
-          </tbody>
-       </table>
-    </div>
-
-  </body>
+   </body>
 </html>
 {% endblock %}

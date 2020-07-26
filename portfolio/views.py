@@ -1,35 +1,31 @@
-from unittest import result
-
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.shortcuts import render
-
 from .models import *
 from .forms import *
 from django.shortcuts import render, get_object_or_404
 from django.shortcuts import redirect
 from django.db.models import Sum
-from json.decoder import JSONDecodeError
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
+from django.core.mail import EmailMessage
+from django.views.generic import View
 from .serializers import CustomerSerializer
+from .serializers import InvestmentSerializer
+from .serializers import StockSerializer
+
 try:
     import simplejson as json
 except ImportError:
     import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-# from .serializers import CustomerSerializer
+
 
 
 from django.http import HttpResponse
 from django.views.generic import View
+from django.template.loader import render_to_string
 # from utils import render_to_pdf
 from django.template.loader import get_template
-from .utils import render_to_pdf
+from weasyprint import HTML, CSS
 
 now = timezone.now()
 
@@ -176,16 +172,12 @@ def portfolio(request, pk):
     # customers = Customer.objects.filter(created_date__lte=timezone.now())
     investments = Investment.objects.filter(customer=pk)
     stocks = Stock.objects.filter(customer=pk)
-
     sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
     sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
-    print(sum_acquired_value)
     acquired_total = sum_acquired_value['acquired_value__sum']
     recent_total = sum_recent_value['recent_value__sum']
-    print(type(sum_acquired_value))
 
     overall_investment_results = recent_total - acquired_total
-    print(overall_investment_results)
 
 
     # Initialize the value of the stocks
@@ -196,74 +188,201 @@ def portfolio(request, pk):
     for stock in stocks:
         sum_current_stocks_value += stock.current_stock_value()
         sum_of_initial_stock_value += stock.initial_stock_value()
-        print(sum_current_stocks_value)
+
 
     sumofinitialprice = float(sum_of_initial_stock_value)
     results = sum_current_stocks_value - sumofinitialprice
-    print(results)
 
-    return render(request, 'portfolio/portfolio.html', {'customer': customer,
-                                                        'investments': investments,
-                                                        'stocks': stocks,
-                                                        'sum_acquired_value': sum_acquired_value,
-                                                        'sum_recent_value': sum_recent_value,
+    context = {'customer': customer,
+               'investments': investments,
+               'stocks': stocks,
+               'sum_acquired_value': sum_acquired_value,
+               'sum_recent_value': sum_recent_value,
 
-                                                        'acquired_total': acquired_total,
-                                                        'recent_total': recent_total,
-                                                        'results': results,
+               'acquired_total': acquired_total,
+               'recent_total': recent_total,
+               'results': results,
 
-                                                        'overall_investment_results': overall_investment_results,
-                                                        'sum_current_stocks_value': sum_current_stocks_value,
-                                                        'sum_of_initial_stock_value': sum_of_initial_stock_value, })
+               'overall_investment_results': overall_investment_results,
+               'sum_current_stocks_value': sum_current_stocks_value,
+               'sum_of_initial_stock_value': sum_of_initial_stock_value, }
 
-def portfolio_summary_pdf(request, pk):
+    scr = stock.current_stock_value()
+    if scr!=0:
+        return render(request, 'portfolio/portfolio.html', context)
+    else:
+        return render(request, 'portfolio/portfolio_KeyError.html')
+
+@login_required
+def portfolioINR(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
-    customers = Customer.objects.filter(created_date__lte=timezone.now())
     investments = Investment.objects.filter(customer=pk)
     stocks = Stock.objects.filter(customer=pk)
 
-    sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
-    sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
-    print(sum_acquired_value)
-    acquired_total = sum_acquired_value['acquired_value__sum']
-    recent_total = sum_recent_value['recent_value__sum']
+    sum_recent_value = 0
+    sum_acquired_value = 0
 
-    overall_investment_results = recent_total - acquired_total
-    print(overall_investment_results)
+    for investment in investments:
+        sum_recent_value += investment.recent_valueINR()
+        sum_acquired_value += investment.acquired_valueINR()
+
+    overall_investment_results = round(sum_recent_value - sum_acquired_value, 2)
 
     # Initialize the value of the stocks
-
     sum_current_stocks_value = 0
     sum_of_initial_stock_value = 0
 
     # Loop through each stock and add the value to the total
     for stock in stocks:
-        sum_current_stocks_value += stock.current_stock_value()
-        sum_of_initial_stock_value += stock.initial_stock_value()
+        sum_current_stocks_value += stock.current_stock_valueINR()
+        sum_of_initial_stock_value += stock.initial_stock_valueINR()
 
-    sumofinitialprice = float(sum_of_initial_stock_value)
-    results = sum_current_stocks_value - sumofinitialprice
+    results = round(sum_current_stocks_value - sum_of_initial_stock_value, 2)
+
+    contextINR = {'customer': customer,
+               'investments': investments,
+               'stocks': stocks,
+               'sum_acquired_value': sum_acquired_value,
+               'sum_recent_value': sum_recent_value,
+
+               'results': results,
+
+               'overall_investment_results': overall_investment_results,
+               'sum_current_stocks_value': sum_current_stocks_value,
+               'sum_of_initial_stock_value': sum_of_initial_stock_value, }
+
+    scr = stock.current_stock_valueINR()
+    if scr!=0:
+        return render(request, 'portfolio/portfolioINR.html', contextINR)
+    else:
+        return render(request, 'portfolio/portfolio_KeyError.html')
+
+class ViewPDF(View):
+
+    def get(self, request, pk, *args, **kwargs):
+        customer = get_object_or_404(Customer, pk=pk)
+        # customers = Customer.objects.filter(created_date__lte=timezone.now())
+        investments = Investment.objects.filter(customer=pk)
+        stocks = Stock.objects.filter(customer=pk)
+
+        sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
+        sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
+        acquired_total = sum_acquired_value['acquired_value__sum']
+        recent_total = sum_recent_value['recent_value__sum']
+
+        overall_investment_results = recent_total - acquired_total
+
+        # Initialize the value of the stocks
+        sum_current_stocks_value = 0
+        sum_of_initial_stock_value = 0
+
+        # Loop through each stock and add the value to the total
+        for stock in stocks:
+            sum_current_stocks_value += stock.current_stock_value()
+            sum_of_initial_stock_value += stock.initial_stock_value()
+
+        sumofinitialprice = float(sum_of_initial_stock_value)
+        results = sum_current_stocks_value - sumofinitialprice
+
+        context = {'customer': customer,
+                   'investments': investments,
+                   'stocks': stocks,
+                   'sum_acquired_value': sum_acquired_value,
+                   'sum_recent_value': sum_recent_value,
+
+                   'acquired_total': acquired_total,
+                   'recent_total': recent_total,
+                   'results': results,
+
+                   'overall_investment_results': overall_investment_results,
+                   'sum_current_stocks_value': sum_current_stocks_value,
+                   'sum_of_initial_stock_value': sum_of_initial_stock_value, }
+
+        scr = stock.current_stock_value()
+        if scr != 0:
+            html_string = render_to_string('portfolio/portfolio_summary.html', context)
+            html = HTML(string=html_string)
+            result = html.write_pdf()
+            response = HttpResponse(result, content_type='application/pdf')
+            return response
+        else:
+            return render(request, 'portfolio/portfolio_KeyError.html')
 
 
+class DownloadPDF(View):
 
-    context = {'customers': customers,
-                                                        'investments': investments,
-                                                        'stocks': stocks,
-                                                        'sum_acquired_value': sum_acquired_value,
-                                                        'sum_recent_value': sum_recent_value,
+    def get(self, request, pk, *args, **kwargs):
+        customer = get_object_or_404(Customer, pk=pk)
+        investments = Investment.objects.filter(customer=pk)
+        stocks = Stock.objects.filter(customer=pk)
+        sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
+        sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
+        acquired_total = sum_acquired_value['acquired_value__sum']
+        recent_total = sum_recent_value['recent_value__sum']
+        overall_investment_results = recent_total - acquired_total
+        sum_of_initial_stock_value = 0
+        # Loop through each stock and add the value to the total
+        for stock in stocks:
+            sum_of_initial_stock_value += stock.initial_stock_value()
 
-                                                        'acquired_total': acquired_total,
-                                                        'recent_total': recent_total,
-                                                        'results': results,
+        context = {'customer': customer,
+                   'investments': investments,
+                   'stocks': stocks,
+                   'sum_acquired_value': sum_acquired_value,
+                   'sum_recent_value': sum_recent_value,
 
-                                                        'overall_investment_results': overall_investment_results,
-                                                        'sum_current_stocks_value': sum_current_stocks_value,
-                                                        'sum_of_initial_stock_value': sum_of_initial_stock_value,}
-    template = get_template('portfolio/portfolio_summary_pdf.html')
-    html = template.render(context)
-    pdf = render_to_pdf('portfolio/8/portfolio_summary_pdf.html', context)
-    return pdf
+                   'acquired_total': acquired_total,
+                   'recent_total': recent_total,
 
+                   'overall_investment_results': overall_investment_results,
+                   'sum_of_initial_stock_value': sum_of_initial_stock_value, }
+
+        html_string = render_to_string('portfolio/portfolio_summary.html', context)
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+        response = HttpResponse(result, content_type='application/pdf')
+        filename = "Portfolio.pdf"
+        content = "attachment; filename='%s'" %(filename)
+        response['Content-Disposition'] = content
+        return response
+
+class EmailPDF(View):
+
+    def get(self, request, pk, *args, **kwargs):
+        customer = get_object_or_404(Customer, pk=pk)
+        investments = Investment.objects.filter(customer=pk)
+        stocks = Stock.objects.filter(customer=pk)
+        sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
+        sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
+        acquired_total = sum_acquired_value['acquired_value__sum']
+        recent_total = sum_recent_value['recent_value__sum']
+        overall_investment_results = recent_total - acquired_total
+        sum_of_initial_stock_value = 0
+        # Loop through each stock and add the value to the total
+        for stock in stocks:
+            sum_of_initial_stock_value += stock.initial_stock_value()
+
+        context = {'customer': customer,
+                   'investments': investments,
+                   'stocks': stocks,
+                   'sum_acquired_value': sum_acquired_value,
+                   'sum_recent_value': sum_recent_value,
+
+                   'acquired_total': acquired_total,
+                   'recent_total': recent_total,
+
+                   'overall_investment_results': overall_investment_results,
+                   'sum_of_initial_stock_value': sum_of_initial_stock_value, }
+
+        html_string = render_to_string('portfolio/portfolio_summary.html', context)
+        html = HTML(string=html_string, base_url=settings.MEDIA_ROOT)
+        pdf = html.write_pdf()
+        cust_email = customer.email
+        email = EmailMessage(
+            'Your EFS Portfolio Summary', 'This is an automated e-mail from Eagle Financial Services. Please find the attached PDF document containing the details of your portfolio summary. Do not reply to this e-mail.', '', [cust_email])
+        email.attach('Portfolio.pdf', pdf, 'application/pdf')
+        email.send()
+        return render(request, 'portfolio/email_success.html')
 
 # List at the end of the views.py
 # Lists all customers
@@ -272,4 +391,18 @@ class CustomerList(APIView):
     def get(self,request):
         customers_json = Customer.objects.all()
         serializer = CustomerSerializer(customers_json, many=True)
+        return Response(serializer.data)
+
+class InvestmentList(APIView):
+
+    def get(self,request):
+        investment_json = Investment.objects.all()
+        serializer = InvestmentSerializer(investment_json, many=True)
+        return Response(serializer.data)
+
+class StockList(APIView):
+
+    def get(self,request):
+        stock_json = Stock.objects.all()
+        serializer = StockSerializer(stock_json, many=True)
         return Response(serializer.data)
