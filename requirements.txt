@@ -22,4 +22,5 @@ tinycss2 == 1.0.0
 cssselect2 == 0.1
 CairoSVG == 2.4.0
 Pyphen == 0.9.1
+matplotlib
 django-heroku

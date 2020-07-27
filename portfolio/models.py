@@ -1,7 +1,8 @@
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User
+
 import urllib, json
+from django.core.cache import cache
 
 # Create your models here.
 class Customer(models.Model):
@@ -43,17 +44,22 @@ class Stock(models.Model):
     def __str__(self):
         return str(self.customer)
 
-    def USD_INR(self): #current stock price in INR
-        url = 'http://data.fixer.io/api/latest?access_key=799b768b1f610aab56d40eee732733a5&format=1'
-        response = urllib.request.urlopen(url)
-        json_data = json.loads(response.read())
-        EUR_INR = json_data.get('rates', {}).get('INR',0)
-        EUR_USD = json_data.get('rates', {}).get('USD',0)
-        if EUR_INR==0 or EUR_INR=={} or EUR_USD==0 or EUR_USD=={}:
-            return 0
-        else:
-            USD_INR = float(EUR_INR)/float(EUR_USD)
-            return USD_INR
+    def USD_INR(self):
+        cache_INR = 'INR'
+        cache_USD = 'USD'
+        cache_time = 86400
+        EUR_INR = cache.get(cache_INR)
+        EUR_USD = cache.get(cache_USD)
+        if not EUR_INR or not EUR_USD:
+            url = 'http://data.fixer.io/api/latest?access_key=799b768b1f610aab56d40eee732733a5&format=1'
+            response = urllib.request.urlopen(url)
+            json_data = json.loads(response.read())
+            EUR_INR = json_data.get('rates').get('INR')
+            EUR_USD = json_data.get('rates').get('USD')
+        cache.set(cache_INR,EUR_INR,cache_time)
+        cache.set(cache_USD, EUR_USD, cache_time)
+        USD_INR = float(EUR_INR)/float(EUR_USD)
+        return USD_INR
 
     def purchase_priceINR(self):
         return round(float(self.purchase_price) * self.USD_INR(), 2)
@@ -65,18 +71,20 @@ class Stock(models.Model):
         return round(float(self.shares) * float(self.purchase_price) * self.USD_INR(), 2)
 
     def current_stock_price(self): #current stock price in USD
-        symbol_f = str(self.symbol)
-        main_api = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&amp;symbol='
-        api_key = '&interval=1min&apikey=08IT8XH58DEISDPP'
-        url = main_api + symbol_f + api_key
-        response = urllib.request.urlopen(url)
-        json_data = json.loads(response.read())
-        open_price = json_data.get('Global Quote', {}).get('02. open',0)
-        if open_price==0 or open_price=={}:
-            return 0
-        else:
-            share_value = float(open_price)
-            return share_value
+        cache_stockprice = 'stk_price'
+        cache_time = 300
+        open_price = cache.get(cache_stockprice)
+        if not open_price:
+            symbol_f = str(self.symbol)
+            main_api = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&amp;symbol='
+            api_key = '&interval=1min&apikey=08IT8XH58DEISDPP'
+            url = main_api + symbol_f + api_key
+            response = urllib.request.urlopen(url)
+            json_data = json.loads(response.read())
+            open_price = json_data.get('Global Quote').get('02. open')
+        cache.set(cache_stockprice, open_price, cache_time)
+        share_value = float(open_price)
+        return share_value
 
     def current_stock_priceINR(self):
         return round(self.current_stock_price() * self.USD_INR(), 2)
@@ -108,17 +116,22 @@ class Investment(models.Model):
     def __str__(self):
         return str(self.customer)
 
-    def USD_INR(self): #current stock price in INR
-        url = 'http://data.fixer.io/api/latest?access_key=799b768b1f610aab56d40eee732733a5&format=1'
-        response = urllib.request.urlopen(url)
-        json_data = json.loads(response.read())
-        EUR_INR = json_data.get('rates', {}).get('INR',0)
-        EUR_USD = json_data.get('rates', {}).get('USD',0)
-        if EUR_INR==0 or EUR_INR=={} or EUR_USD==0 or EUR_USD=={}:
-            return 0
-        else:
-            USD_INR = float(EUR_INR)/float(EUR_USD)
-            return USD_INR
+    def USD_INR(self):
+        cache_INR = 'INR'
+        cache_USD = 'USD'
+        cache_time = 86400
+        EUR_INR = cache.get(cache_INR)
+        EUR_USD = cache.get(cache_USD)
+        if not EUR_INR or not EUR_USD:
+            url = 'http://data.fixer.io/api/latest?access_key=799b768b1f610aab56d40eee732733a5&format=1'
+            response = urllib.request.urlopen(url)
+            json_data = json.loads(response.read())
+            EUR_INR = json_data.get('rates').get('INR')
+            EUR_USD = json_data.get('rates').get('USD')
+        cache.set(cache_INR, EUR_INR, cache_time)
+        cache.set(cache_USD, EUR_USD, cache_time)
+        USD_INR = float(EUR_INR) / float(EUR_USD)
+        return USD_INR
 
     def acquired_valueINR(self):
         return round(float(self.acquired_value) * self.USD_INR(), 2)

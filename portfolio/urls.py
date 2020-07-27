@@ -28,6 +28,7 @@ urlpatterns = [
     path('customer/<int:pk>/portfolio/pdf_download/', views.DownloadPDF.as_view(), name='pdf_download'),
     path('customer/<int:pk>/portfolio/pdf_view/', views.ViewPDF.as_view(), name='pdf_view'),
     path('customer/<int:pk>/portfolio/pdf_email/', views.EmailPDF.as_view(), name='pdf_email'),
+    path('customer/<int:pk>/portfolio/graph/', views.Graphimage.as_view(), name='graph'),
     url(r'^customers_json/', views.CustomerList.as_view()),
     url(r'^investments_json/', views.InvestmentList.as_view()),
     url(r'^stocks_json/', views.StockList.as_view()),

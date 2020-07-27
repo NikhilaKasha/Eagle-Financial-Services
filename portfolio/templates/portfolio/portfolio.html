@@ -146,6 +146,7 @@
              <td><a href="{% url 'portfolio:pdf_view' pk=customer.pk %}"  class="row"><span class="btn btn-primary">View Report (PDF)</span></a></td>
              <td><a href="{% url 'portfolio:pdf_download' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Download Report</span></a></td>
              <td><a href="{% url 'portfolio:pdf_email' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Send Report via e-mail</span></a></td>
+             <td><a href="{% url 'portfolio:graph' pk=customer.pk %}"  class="row"><span class="btn btn-primary">View Graph</span></a></td>
              <td><a href="{% url 'portfolio:portfolioINR' pk=customer.pk %}"  class="row"><span class="btn btn-primary">Convert to INR</span></a></td>
           </tr>
           </tbody>

@@ -1,3 +1,9 @@
+from django.http import HttpResponse
+from matplotlib import pylab
+from pylab import *
+import PIL, PIL.Image
+from io import BytesIO
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from .models import *
@@ -169,15 +175,13 @@ def investment_delete(request, pk):
 @login_required
 def portfolio(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
-    # customers = Customer.objects.filter(created_date__lte=timezone.now())
     investments = Investment.objects.filter(customer=pk)
     stocks = Stock.objects.filter(customer=pk)
     sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
     sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
     acquired_total = sum_acquired_value['acquired_value__sum']
     recent_total = sum_recent_value['recent_value__sum']
-
-    overall_investment_results = recent_total - acquired_total
+    overall_investment_results = round(recent_total - acquired_total, 2)
 
 
     # Initialize the value of the stocks
@@ -207,11 +211,8 @@ def portfolio(request, pk):
                'sum_current_stocks_value': sum_current_stocks_value,
                'sum_of_initial_stock_value': sum_of_initial_stock_value, }
 
-    scr = stock.current_stock_value()
-    if scr!=0:
-        return render(request, 'portfolio/portfolio.html', context)
-    else:
-        return render(request, 'portfolio/portfolio_KeyError.html')
+    return render(request, 'portfolio/portfolio.html', context)
+
 
 @login_required
 def portfolioINR(request, pk):
@@ -251,11 +252,9 @@ def portfolioINR(request, pk):
                'sum_current_stocks_value': sum_current_stocks_value,
                'sum_of_initial_stock_value': sum_of_initial_stock_value, }
 
-    scr = stock.current_stock_valueINR()
-    if scr!=0:
-        return render(request, 'portfolio/portfolioINR.html', contextINR)
-    else:
-        return render(request, 'portfolio/portfolio_KeyError.html')
+
+    return render(request, 'portfolio/portfolioINR.html', contextINR)
+
 
 class ViewPDF(View):
 
@@ -270,7 +269,7 @@ class ViewPDF(View):
         acquired_total = sum_acquired_value['acquired_value__sum']
         recent_total = sum_recent_value['recent_value__sum']
 
-        overall_investment_results = recent_total - acquired_total
+        overall_investment_results = round(recent_total - acquired_total, 2)
 
         # Initialize the value of the stocks
         sum_current_stocks_value = 0
@@ -281,8 +280,7 @@ class ViewPDF(View):
             sum_current_stocks_value += stock.current_stock_value()
             sum_of_initial_stock_value += stock.initial_stock_value()
 
-        sumofinitialprice = float(sum_of_initial_stock_value)
-        results = sum_current_stocks_value - sumofinitialprice
+        results = round(sum_current_stocks_value - float(sum_of_initial_stock_value), 2)
 
         context = {'customer': customer,
                    'investments': investments,
@@ -298,32 +296,38 @@ class ViewPDF(View):
                    'sum_current_stocks_value': sum_current_stocks_value,
                    'sum_of_initial_stock_value': sum_of_initial_stock_value, }
 
-        scr = stock.current_stock_value()
-        if scr != 0:
-            html_string = render_to_string('portfolio/portfolio_summary.html', context)
-            html = HTML(string=html_string)
-            result = html.write_pdf()
-            response = HttpResponse(result, content_type='application/pdf')
-            return response
-        else:
-            return render(request, 'portfolio/portfolio_KeyError.html')
+        html_string = render_to_string('portfolio/portfolio_summary.html', context)
+        html = HTML(string=html_string)
+        result = html.write_pdf()
+        response = HttpResponse(result, content_type='application/pdf')
+        return response
 
 
 class DownloadPDF(View):
 
     def get(self, request, pk, *args, **kwargs):
         customer = get_object_or_404(Customer, pk=pk)
+        # customers = Customer.objects.filter(created_date__lte=timezone.now())
         investments = Investment.objects.filter(customer=pk)
         stocks = Stock.objects.filter(customer=pk)
+
         sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
         sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
         acquired_total = sum_acquired_value['acquired_value__sum']
         recent_total = sum_recent_value['recent_value__sum']
-        overall_investment_results = recent_total - acquired_total
+
+        overall_investment_results = round(recent_total - acquired_total, 2)
+
+        # Initialize the value of the stocks
+        sum_current_stocks_value = 0
         sum_of_initial_stock_value = 0
+
         # Loop through each stock and add the value to the total
         for stock in stocks:
+            sum_current_stocks_value += stock.current_stock_value()
             sum_of_initial_stock_value += stock.initial_stock_value()
+
+        results = round(sum_current_stocks_value - float(sum_of_initial_stock_value), 2)
 
         context = {'customer': customer,
                    'investments': investments,
@@ -333,8 +337,10 @@ class DownloadPDF(View):
 
                    'acquired_total': acquired_total,
                    'recent_total': recent_total,
+                   'results': results,
 
                    'overall_investment_results': overall_investment_results,
+                   'sum_current_stocks_value': sum_current_stocks_value,
                    'sum_of_initial_stock_value': sum_of_initial_stock_value, }
 
         html_string = render_to_string('portfolio/portfolio_summary.html', context)
@@ -350,17 +356,27 @@ class EmailPDF(View):
 
     def get(self, request, pk, *args, **kwargs):
         customer = get_object_or_404(Customer, pk=pk)
+        # customers = Customer.objects.filter(created_date__lte=timezone.now())
         investments = Investment.objects.filter(customer=pk)
         stocks = Stock.objects.filter(customer=pk)
+
         sum_recent_value = Investment.objects.filter(customer=pk).aggregate(Sum('recent_value'))
         sum_acquired_value = Investment.objects.filter(customer=pk).aggregate(Sum('acquired_value'))
         acquired_total = sum_acquired_value['acquired_value__sum']
         recent_total = sum_recent_value['recent_value__sum']
-        overall_investment_results = recent_total - acquired_total
+
+        overall_investment_results = round(recent_total - acquired_total, 2)
+
+        # Initialize the value of the stocks
+        sum_current_stocks_value = 0
         sum_of_initial_stock_value = 0
+
         # Loop through each stock and add the value to the total
         for stock in stocks:
+            sum_current_stocks_value += stock.current_stock_value()
             sum_of_initial_stock_value += stock.initial_stock_value()
+
+        results = round(sum_current_stocks_value - float(sum_of_initial_stock_value), 2)
 
         context = {'customer': customer,
                    'investments': investments,
@@ -370,8 +386,10 @@ class EmailPDF(View):
 
                    'acquired_total': acquired_total,
                    'recent_total': recent_total,
+                   'results': results,
 
                    'overall_investment_results': overall_investment_results,
+                   'sum_current_stocks_value': sum_current_stocks_value,
                    'sum_of_initial_stock_value': sum_of_initial_stock_value, }
 
         html_string = render_to_string('portfolio/portfolio_summary.html', context)
@@ -383,6 +401,62 @@ class EmailPDF(View):
         email.attach('Portfolio.pdf', pdf, 'application/pdf')
         email.send()
         return render(request, 'portfolio/email_success.html')
+
+class Graphimage(View):
+    def get(self, request, pk):
+        customer = get_object_or_404(Customer, pk=pk)
+        # customers = Customer.objects.filter(created_date__lte=timezone.now())
+        investments = Investment.objects.filter(customer=pk)
+        stocks = Stock.objects.filter(customer=pk)
+
+        sum_recent_value = 0
+        sum_acquired_value = 0
+
+        for investment in investments:
+            sum_recent_value += investment.recent_value
+            sum_acquired_value += investment.acquired_value
+
+        overall_investment_results = round(sum_recent_value - sum_acquired_value)
+
+        # Initialize the value of the stocks
+        sum_current_stocks_value = 0
+        sum_of_initial_stock_value = 0
+
+        # Loop through each stock and add the value to the total
+        for stock in stocks:
+            sum_current_stocks_value += stock.current_stock_value()
+            sum_of_initial_stock_value += stock.initial_stock_value()
+
+        results = round(sum_current_stocks_value - float(sum_of_initial_stock_value))
+
+        # Construct the graph
+        inv_type = ['Stocks', 'Non-Stock']
+        value = ['Initial', 'Current']
+        invest_type = ['Stocks', 'Non-Stock']
+        inv_value = [sum_of_initial_stock_value, sum_acquired_value]
+        cur_value = [sum_current_stocks_value, sum_recent_value]
+
+        plt.bar([1,2.7], inv_value, width=0.35, color='blue')
+        plt.bar([1.35,3.05], cur_value, width=0.35, color='red')
+        plt.bar(4.4, results, width=0.35, color='green')
+        plt.bar(4.75, overall_investment_results, width=0.35, color='yellow')
+        plt.xticks([1.175, 2.875, 4.575], ['Stocks', 'Non-Stock', 'Net Return'])
+        plt.legend(['Initial', 'Current', 'Stocks', 'Non-Stock'], loc=1)
+
+        ylabel('Value (USD)')
+        title('Overall portfolio performance')
+        grid(False)
+
+        # Store image in a string buffer
+        buffer = BytesIO()
+        canvas = pylab.get_current_fig_manager().canvas
+        canvas.draw()
+        pilImage = PIL.Image.frombytes("RGB", canvas.get_width_height(), canvas.tostring_rgb())
+        pilImage.save(buffer, "PNG")
+        pylab.close()
+
+        # Send buffer in a http response the the browser with the mime type image/png set
+        return HttpResponse(buffer.getvalue(), content_type="image/png")
 
 # List at the end of the views.py
 # Lists all customers
